@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Productivity Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 800px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 25px;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            background-color: #f1f1f1;
+        }
+        .tab.todo.active, .tab.todo:hover {
+            background-color: #00b4db;
+            color: white;
+        }
+        .tab.expenses.active, .tab.expenses:hover {
+            background-color: #44bd32;
+            color: white;
+        }
+        .tab.health.active, .tab.health:hover {
+            background-color: #9c27b0;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #todo.tab-content {
+            background: linear-gradient(to bottom, #74ebd5, #acb6e5);
+            border: 2px solid #00b4db;
+        }
+        #expenses.tab-content {
+            background: linear-gradient(to bottom, #b8e994, #78e08f);
+            border: 2px solid #44bd32;
+        }
+        #health.tab-content {
+            background: linear-gradient(to bottom, #d6a4e8, #a29bfe);
+            border: 2px solid #9c27b0;
+        }
+        .form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            type: button;
+        }
+        .add-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .add-btn:hover {
+            background-color: #218838;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 12px;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .complete-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+        }
+        .complete-btn:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f1f1f1;
+            font-size: 16px;
+        }
+        .positive {
+            color: #28a745;
+        }
+        .negative {
+            color: #dc3545;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .summary div {
+            text-align: center;
+        }
+        .summary h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .summary p {
+            margin: 5px 0 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .chart-container {
+            margin-top: 20px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            display: none;
+            z-index: 1000;
+        }
+        .notification.success {
+            background-color: #28a745;
+        }
+        .notification.error {
+            background-color: #dc3545;
+        }
+        .notification .close {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Personal Productivity Dashboard</h1>
+        <div class="tabs">
+            <div class="tab todo active" onclick="showTab('todo')">To-Do List</div>
+            <div class="tab expenses" onclick="showTab('expenses')">Expense Tracker</div>
+            <div class="tab health" onclick="showTab('health')">Health Tracker</div>
+        </div>
+
+        <!-- Notification -->
+        <div class="notification" id="notification">
+            <span id="notificationText"></span>
+            <span class="close" onclick="closeNotification()">×</span>
+        </div>
+
+        <!-- To-Do List -->
+        <div class="tab-content active" id="todo">
+            <div class="form">
+                <input type="text" id="taskInput" placeholder="Enter a task...">
+                <button class="add-btn" type="button" onclick="addTask()">Add Task</button>
+            </div>
+            <table id="taskTable">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="taskList"></tbody>
+            </table>
+        </div>
+
+        <!-- Expense Tracker -->
+        <div class="tab-content" id="expenses">
+            <div class="summary">
+                <div>
+                    <h3>Balance</h3>
+                    <p id="balance">$0.00</p>
+                </div>
+                <div>
+                    <h3>Income</h3>
+                    <p id="income" class="positive">$0.00</p>
+                </div>
+                <div>
+                    <h3>Expense</h3>
+                    <p id="expense" class="negative">$0.00</p>
+                </div>
+            </div>
+            <div class="form">
+                <input type="text" id="expenseDescription" placeholder="Enter description...">
+                <input type="number" id="expenseAmount" placeholder="Enter amount..." min="0">
+                <select id="transactionType">
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+                <button class="add-btn" type="button" onclick="addTransaction()">Add Transaction</button>
+            </div>
+            <table id="transactionTable">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionList"></tbody>
+            </table>
+            <div class="chart-container">
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Health Tracker -->
+        <div class="tab-content" id="health">
+            <div class="summary">
+                <div>
+                    <h3>Water</h3>
+                    <p id="waterTotal">0 ml</p>
+                </div>
+                <div>
+                    <h3>Exercise</h3>
+                    <p id="exerciseTotal">0 min</p>
+                </div>
+                <div>
+                    <h3>Sleep</h3>
+                    <p id="sleepTotal">0 hrs</p>
+                </div>
+            </div>
+            <div class="form">
+                <input type="number" id="waterInput" placeholder="Water (ml)...">
+                <input type="number" id="exerciseInput" placeholder="Exercise (min)...">
+                <input type="number" id="sleepInput" placeholder="Sleep (hrs)...">
+                <button class="add-btn" type="button" onclick="addHealthEntry()">Add Entry</button>
+            </div>
+            <table id="healthTable">
+                <thead>
+                    <tr>
+                        <th>Water (ml)</th>
+                        <th>Exercise (min)</th>
+                        <th>Sleep (hrs)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="healthList"></tbody>
+            </table>
+            <div class="chart-container">
+                <canvas id="healthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let healthEntries = JSON.parse(localStorage.getItem('healthEntries')) || [];
+
+        // Chart instances
+        let expenseChart, healthChart;
+
+        // Notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function closeNotification() {
+            document.getElementById('notification').style.display = 'none';
+        }
+
+        // Tab switching
+        function showTab(tabId) {
+            console.log(`Switching to tab: ${tabId}`);
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // To-Do List
+        function addTask() {
+            const text = document.getElementById('taskInput').value.trim();
+            if (text === '') {
+                showNotification('Please enter a task!', 'error');
+                return;
+            }
+            const task = { id: Date.now(), text, completed: false };
+            tasks.push(task);
+            saveTasks();
+            renderTask(task);
+            showNotification('Task added!');
+            document.getElementById('taskInput').value = '';
+        }
+
+        function renderTask(task) {
+            const taskList = document.getElementById('taskList');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="${task.completed ? 'completed' : ''}">${task.text}</td>
+                <td>${task.completed ? 'Completed' : 'Pending'}</td>
+                <td>
+                    <button class="complete-btn" type="button" onclick="toggleTask(${task.id})">
+                        ${task.completed ? 'Undo' : 'Complete'}
+                    </button>
+                    <button class="delete-btn" type="button" onclick="deleteTask(${task.id})">Delete</button>
+                </td>
+            `;
+            taskList.appendChild(tr);
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) task.completed = !task.completed;
+                return task;
+            });
+            saveTasks();
+            refreshTaskList();
+            showNotification(`Task ${tasks.find(t => t.id === id).completed ? 'completed' : 'reopened'}!`);
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            refreshTaskList();
+            showNotification('Task deleted!');
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function refreshTaskList() {
+            document.getElementById('taskList').innerHTML = '';
+            tasks.forEach(renderTask);
+        }
+
+        // Expense Tracker
+        function addTransaction() {
+            const description = document.getElementById('expenseDescription').value.trim();
+            const amount = document.getElementById('expenseAmount').value.trim();
+            const type = document.getElementById('transactionType').value;
+
+            if (description === '' || amount === '' || isNaN(amount) || amount <= 0) {
+                showNotification('Please enter a valid description and positive amount!', 'error');
+                return;
+            }
+
+            const transaction = {
+                id: Date.now(),
+                text: description,
+                amount: type === 'income' ? +amount : -amount,
+                type: type.charAt(0).toUpperCase() + type.slice(1)
+            };
+
+            transactions.push(transaction);
+            saveTransactions();
+            renderTransaction(transaction);
+            updateSummary();
+            updateExpenseChart();
+            showNotification('Transaction added!');
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseAmount').value = '';
+        }
+
+        function renderTransaction(transaction) {
+            const transactionList = document.getElementById('transactionList');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${transaction.text}</td>
+                <td class="${transaction.amount >= 0 ? 'positive' : 'negative'}">
+                    ${transaction.amount >= 0 ? '+' : ''}$${Math.abs(transaction.amount).toFixed(2)}
+                </td>
+                <td>${transaction.type}</td>
+                <td>
+                    <button class="delete-btn" type="button" onclick="deleteTransaction(${transaction.id})">Delete</button>
+                </td>
+            `;
+            transactionList.appendChild(tr);
+        }
+
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveTransactions();
+            refreshTransactionList();
+            updateSummary();
+            updateExpenseChart();
+            showNotification('Transaction deleted!');
+        }
+
+        function saveTransactions() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function updateSummary() {
+            const income = transactions
+                .filter(t => t.amount > 0)
+                .reduce((sum, t) => sum + t.amount, 0);
+            const expense = transactions
+                .filter(t => t.amount < 0)
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            const balance = income - expense;
+            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
+            document.getElementById('income').textContent = `$${income.toFixed(2)}`;
+            document.getElementById('expense').textContent = `$${expense.toFixed(2)}`;
+        }
+
+        function refreshTransactionList() {
+            document.getElementById('transactionList').innerHTML = '';
+            transactions.forEach(renderTransaction);
+        }
+
+        function updateExpenseChart() {
+            const income = transactions
+                .filter(t => t.amount > 0)
+                .reduce((sum, t) => sum + t.amount, 0);
+            const expense = transactions
+                .filter(t => t.amount < 0)
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            if (expenseChart) expenseChart.destroy();
+            expenseChart = new Chart(document.getElementById('expenseChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Income', 'Expense'],
+                    datasets: [{
+                        data: [income || 1, expense || 1],
+                        backgroundColor: ['#28a745', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: true, text: 'Income vs Expense' }
+                    }
+                }
+            });
+        }
+
+        // Health Tracker
+        function addHealthEntry() {
+            const water = document.getElementById('waterInput').value.trim();
+            const exercise = document.getElementById('exerciseInput').value.trim();
+            const sleep = document.getElementById('sleepInput').value.trim();
+            if ((water === '' || water <= 0) && (exercise === '' || exercise <= 0) && (sleep === '' || sleep <= 0)) {
+                showNotification('Please enter at least one valid health metric!', 'error');
+                return;
+            }
+            const entry = {
+                id: Date.now(),
+                water: water ? +water : 0,
+                exercise: exercise ? +exercise : 0,
+                sleep: sleep ? +sleep : 0
+            };
+            healthEntries.push(entry);
+            saveHealthEntries();
+            renderHealthEntry(entry);
+            updateHealthSummary();
+            updateHealthChart();
+            showNotification('Health entry added!');
+            document.getElementById('waterInput').value = '';
+            document.getElementById('exerciseInput').value = '';
+            document.getElementById('sleepInput').value = '';
+        }
+
+        function renderHealthEntry(entry) {
+            const healthList = document.getElementById('healthList');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${entry.water} ml</td>
+                <td>${entry.exercise} min</td>
+                <td>${entry.sleep} hrs</td>
+                <td>
+                    <button class="delete-btn" type="button" onclick="deleteHealthEntry(${entry.id})">Delete</button>
+                </td>
+            `;
+            healthList.appendChild(tr);
+        }
+
+        function deleteHealthEntry(id) {
+            healthEntries = healthEntries.filter(e => e.id !== id);
+            saveHealthEntries();
+            refreshHealthList();
+            updateHealthSummary();
+            updateHealthChart();
+            showNotification('Health entry deleted!');
+        }
+
+        function saveHealthEntries() {
+            localStorage.setItem('healthEntries', JSON.stringify(healthEntries));
+        }
+
+        function updateHealthSummary() {
+            const waterTotal = healthEntries.reduce((sum, e) => sum + e.water, 0);
+            const exerciseTotal = healthEntries.reduce((sum, e) => sum + e.exercise, 0);
+            const sleepTotal = healthEntries.reduce((sum, e) => sum + e.sleep, 0);
+            document.getElementById('waterTotal').textContent = `${waterTotal} ml`;
+            document.getElementById('exerciseTotal').textContent = `${exerciseTotal} min`;
+            document.getElementById('sleepTotal').textContent = `${sleepTotal} hrs`;
+        }
+
+        function refreshHealthList() {
+            document.getElementById('healthList').innerHTML = '';
+            healthEntries.forEach(renderHealthEntry);
+        }
+
+        function updateHealthChart() {
+            const waterTotal = healthEntries.reduce((sum, e) => sum + e.water, 0);
+            const exerciseTotal = healthEntries.reduce((sum, e) => sum + e.exercise, 0);
+            const sleepTotal = healthEntries.reduce((sum, e) => sum + e.sleep, 0);
+
+            if (healthChart) healthChart.destroy();
+            healthChart = new Chart(document.getElementById('healthChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Water (ml)', 'Exercise (min)', 'Sleep (hrs)'],
+                    datasets: [{
+                        label: 'Health Metrics',
+                        data: [waterTotal, exerciseTotal, sleepTotal],
+                        backgroundColor: ['#00b4db', '#44bd32', '#9c27b0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Health Metrics Overview' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshTaskList();
+            refreshTransactionList();
+            refreshHealthList();
+            updateSummary();
+            updateHealthSummary();
+            updateExpenseChart();
+            updateHealthChart();
+        });
+
+        // Enter key support
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+        document.getElementById('expenseAmount').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTransaction();
+        });
+        document.getElementById('sleepInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addHealthEntry();
+        });
+    </script>
+</body>
+</html>
