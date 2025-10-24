@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<h1 class="text-2xl font-extrabold text-sky-400">✅ My Tasks</h1>
+<p class="text-sm text-neutral-300 mt-1">A fully featured To‑Do SPA — localStorage, filters, drag & drop, import/export.</p>
+</div>
+
+
+<div class="flex gap-2 items-center">
+<button id="exportBtn" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm">Export</button>
+<label for="importFile" class="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-sm cursor-pointer">Import</label>
+<input id="importFile" type="file" accept="application/json" class="hidden" />
+<button id="clearAllBtn" class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-sm">Clear All</button>
+</div>
+</header>
+
+
+<!-- Input row -->
+<form id="taskForm" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2">
+<input id="taskInput" aria-label="New task" class="col-span-2 p-3 rounded-lg text-neutral-900" placeholder="What do you want to do? (press Enter to add)">
+<div class="flex gap-2">
+<input id="dueInput" type="date" class="p-3 rounded-lg text-neutral-900 w-full" />
+<select id="prioritySelect" class="p-3 rounded-lg text-neutral-900 w-36">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High</option>
+</select>
+</div>
+<div class="sm:col-span-3 flex flex-wrap items-center justify-between gap-2 mt-1">
+<div class="flex gap-2 items-center">
+<button id="addBtn" type="submit" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400">Add Task</button>
+<input id="searchInput" placeholder="Search tasks... (Ctrl+F)" class="p-2 rounded-lg text-neutral-900 w-64" />
+</div>
+
+
+<div class="flex gap-2 items-center">
+<div class="inline-flex rounded-lg bg-neutral-700 p-1">
+<button data-filter="all" class="filterBtn px-3 py-1 rounded">All</button>
+<button data-filter="active" class="filterBtn px-3 py-1 rounded">Active</button>
+<button data-filter="completed" class="filterBtn px-3 py-1 rounded">Completed</button>
+</div>
+
+
+<select id="sortSelect" class="p-2 rounded-lg text-neutral-900">
+<option value="created_desc">Newest</option>
+<option value="created_asc">Oldest</option>
+<option value="due_asc">Due Soon</option>
+<option value="priority_desc">Priority</option>
+</select>
+
+
+<button id="clearCompleted" class="px-3 py-1 rounded-lg bg-red-500 hover:bg-red-400">Clear Completed</button>
+</div>
+</div>
+</form>
+
+
+<!-- Stats -->
+<div class="mt-4 flex justify-between items-center text-sm text-neutral-300">
+<div id="stats">0 tasks — 0 active</div>
+<div id="lastSaved" class="italic text-xs"></div>
+</div>
+
+
+<!-- Task list -->
+<ul id="taskList" class="mt-4 space-y-3" aria-live="polite"></ul>
+
+
+<!-- Empty state -->
+<p id="emptyState" class="mt-6 text-center text-neutral-400 hidden">No tasks yet — add your first task above ✨</p>
+
+
+<!-- Footer notes -->
+<footer class="mt-6 text-xs text-neutral-400">
+Tip: drag tasks to reorder. Click a task to toggle complete. Double-click to edit.
+</footer>
+</section>
+</main>
+
+
+<script src="app.js"></script>
+</body>
+</html>

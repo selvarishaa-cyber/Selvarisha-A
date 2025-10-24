@@ -1,0 +1,24 @@
+/* Minor custom styles to complement Tailwind */
+:root{--accent:#06b6d4}
+
+
+/* Drag placeholder styling */
+.dragging { opacity: 0.5; }
+.placeholder {
+border: 2px dashed rgba(255,255,255,0.08);
+height: 56px;
+border-radius: 12px;
+}
+
+
+/* Make input focus more visible */
+input:focus, select:focus, button:focus {
+outline: 3px solid rgba(6,182,212,0.12);
+outline-offset: 2px;
+}
+
+
+/* small responsive niceties */
+@media (max-width: 640px) {
+#taskInput { font-size: 14px; }
+}
